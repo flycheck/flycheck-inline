@@ -113,9 +113,8 @@ ERRORS is a list of `flycheck-error' objects."
 
 (defun flycheck-inline-hide-messages ()
   "Hide all inline messages currently being shown."
-  (when (not flycheck-display-error-caused-by-next-error)
     (mapc #'phantom-delete flycheck-inline--phantoms)
-    (setq flycheck-inline--phantoms nil)))
+    (setq flycheck-inline--phantoms nil))
 
 (defvar flycheck-inline-old-display-function nil
   "The former value of `flycheck-display-errors-function'.")
