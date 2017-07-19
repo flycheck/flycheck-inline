@@ -136,27 +136,24 @@ In `flycheck-inline-mode', show Flycheck error messages inline,
 directly below the error reported location."
   :global t
   :group 'flycheck
-  (let ((hooks '(post-command-hook)))
-    (cond
-     ;; Use our display function and remember the old one but only if we haven't
-     ;; yet configured it, to avoid activating twice.
-     ((and flycheck-inline-mode
-           (not (eq flycheck-display-errors-function
-                    #'flycheck-inline-display-messages)))
-      (setq flycheck-inline-old-display-function flycheck-display-errors-function
-            flycheck-display-errors-function #'flycheck-inline-display-messages)
-      (dolist (hook hooks)
-        (add-hook hook #'flycheck-inline-hide-messages)))
-     ;; Reset the display function and remove ourselves from all hooks but only
-     ;; if the mode is still active.
-     ((and (not flycheck-inline-mode)
-           (eq flycheck-display-errors-function
-               #'flycheck-inline-display-messages))
-      (setq flycheck-display-errors-function flycheck-inline-old-display-function
-            flycheck-inline-old-display-function nil)
-      (flycheck-inline-hide-messages)
-      (dolist (hook hooks)
-        (remove-hook hook 'flycheck-inline-hide-messages))))))
+  (cond
+   ;; Use our display function and remember the old one but only if we haven't
+   ;; yet configured it, to avoid activating twice.
+   ((and flycheck-inline-mode
+         (not (eq flycheck-display-errors-function
+                  #'flycheck-inline-display-messages)))
+    (setq flycheck-inline-old-display-function flycheck-display-errors-function
+          flycheck-display-errors-function #'flycheck-inline-display-messages)
+    (add-hook 'post-command-hook #'flycheck-inline-hide-messages))
+   ;; Reset the display function and remove ourselves from all hooks but only
+   ;; if the mode is still active.
+   ((and (not flycheck-inline-mode)
+         (eq flycheck-display-errors-function
+             #'flycheck-inline-display-messages))
+    (setq flycheck-display-errors-function flycheck-inline-old-display-function
+          flycheck-inline-old-display-function nil)
+    (flycheck-inline-hide-messages)
+    (remove-hook 'post-command-hook 'flycheck-inline-hide-messages))))
 
 (provide 'flycheck-inline)
 
