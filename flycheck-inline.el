@@ -1,6 +1,6 @@
 ;;; flycheck-inline-.el --- Display Flycheck errors inline -*- lexical-binding: t; -*-
 
-;; Copyright (C) 2017 fmdkdd
+;; Copyright (C) 2017-2018 fmdkdd
 
 ;; Author: fmdkdd
 ;; URL: https://github.com/flycheck/flycheck-inline
@@ -93,9 +93,21 @@ Return the displayed phantom."
 
 (defun flycheck-inline--display-phantom (err)
   "Display `flycheck-error' ERR in a phantom."
-  (let* ((pos (car (flycheck-error-region-for-mode err 'columns)))
+  (let* ((other-file (flycheck-relevant-error-other-file-p err))
+         (pos (car
+               (if other-file
+                   ;; Display overlays for other-file errors on the first line
+                   (cons (point-min)
+                         (save-excursion
+                           (goto-char (point-min)) (point-at-eol)))
+               (flycheck-error-region-for-mode err 'columns))))
          (msg (propertize
-               (flycheck-error-message err)
+               (if other-file
+                   (format "In \"%s\": %s"
+                           (file-relative-name (flycheck-error-filename err)
+                                               default-directory)
+                           (flycheck-error-message err))
+                 (flycheck-error-message err))
                'face (pcase (flycheck-error-level err)
                        (`info 'flycheck-inline-info)
                        (`warning 'flycheck-inline-warning)
