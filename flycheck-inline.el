@@ -54,7 +54,14 @@ Return the displayed phantom."
                   (goto-char p)
                   (cons (- p (point-at-bol)) (point-at-eol))))
                (ov (make-overlay pos-eol (1+ pos-eol)))
-               (str (concat (make-string offset ?\s) msg "\n")))
+               ;; If the error is on the last line, and that line doesn't end
+               ;; with a newline, the overlay will be displayed at the end of
+               ;; the line instead of below it.  Adding a newline before the
+               ;; message fixes it.
+               (str (concat (when (eq pos-eol (point-max)) "\n")
+                            (make-string offset ?\s)
+                            (string-trim msg)
+                            "\n")))
     (overlay-put ov 'phantom t)
     (overlay-put ov 'after-string str)
     ov))
