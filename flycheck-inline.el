@@ -30,14 +30,16 @@
 
 ;;;; Setup
 
-;; (with-eval-after-load 'flycheck-inline
+;; (with-eval-after-load 'flycheck
 ;;   (flycheck-inline-mode))
 
 ;;; Code:
 
 (require 'flycheck)
 
+
 ;;; Displaying line-long overlays (phantoms)
+
 (defun phantom-display (msg &optional pos)
   "Display MSG in a phantom directly below POS.
 
@@ -62,8 +64,9 @@ Return the displayed phantom."
   (when (overlay-get phantom 'phantom)
     (delete-overlay phantom)))
 
+
+;;; Customization
 
-;;; flycheck-inline mode proper
 (defgroup flycheck-inline nil
   "Display Flycheck errors inline."
   :prefix "flycheck-inline-"
@@ -88,45 +91,106 @@ Return the displayed phantom."
   :package-version '(flycheck-inline . "0.1")
   :group 'flycheck-inline)
 
+(defcustom flycheck-inline-display-function #'flycheck-inline-display-phantom
+  "Function to display inline errors.
+
+This function is used to display inline all errors at point, as
+well as all related errors.  It has the signature (MSG &optional
+POS), where MSG is the error message to display, and POS its
+buffer position."
+  :group 'flycheck-inline
+  :package-version '(flycheck-inline . "0.1")
+  :type '(function :tag "Inline error display function")
+  :risky t)
+
+(defcustom flycheck-inline-clear-function #'flycheck-inline-clear-phantoms
+  "Function to clear all inline errors.
+
+It takes no arguments and should remove all inline errors created
+by `flycheck-inline-display-function'."
+  :group 'flycheck-inline
+  :package-version '(flycheck-inline . "0.1")
+  :type '(function :tag "Inline error clear function")
+  :risky t)
+
+(defcustom flycheck-inline-display-error-id t
+  "Whether to display error IDs inline.
+
+If non-nil, inline errors will contain the error ID.  Error IDs
+are optional: not all checkers suplpy this information.  Error
+IDs can also be seen in Flycheck's error list."
+  :group 'flycheck-inline
+  :type 'boolean
+  :package-version '(flycheck-inline . "0.1")
+  :safe #'booleanp)
+
+
+;;; Displaying inline errors with phantoms
+
 (defvar-local flycheck-inline--phantoms nil
   "Remember which phantoms were added to the buffer.")
 
-(defun flycheck-inline--display-phantom (err)
-  "Display `flycheck-error' ERR in a phantom."
-  (let* ((other-file (flycheck-relevant-error-other-file-p err))
-         (pos (car
-               (if other-file
-                   ;; Display overlays for other-file errors on the first line
-                   (cons (point-min)
-                         (save-excursion
-                           (goto-char (point-min)) (point-at-eol)))
-               (flycheck-error-region-for-mode err 'columns))))
-         (msg (propertize
-               (if other-file
-                   (format "In \"%s\": %s"
-                           (file-relative-name (flycheck-error-filename err)
-                                               default-directory)
-                           (flycheck-error-message err))
-                 (flycheck-error-message err))
-               'face (pcase (flycheck-error-level err)
-                       (`info 'flycheck-inline-info)
-                       (`warning 'flycheck-inline-warning)
-                       (`error 'flycheck-inline-error)))))
-    (push (phantom-display msg pos) flycheck-inline--phantoms)))
+(defun flycheck-inline-display-phantom (msg &optional pos)
+  "Display MSG at POS using phantoms.
 
-(defun flycheck-inline-display-messages (errors)
-  "Display ERRORS, and all errors from their groups, inline.
+POS defaults to point."
+  (push (phantom-display msg pos) flycheck-inline--phantoms))
+
+(defun flycheck-inline-clear-phantoms ()
+  "Remove all phantoms from buffer."
+  (mapc #'phantom-delete flycheck-inline--phantoms)
+  (setq flycheck-inline--phantoms nil))
+
+
+
+;;; Display inline errors
+
+(defun flycheck-inline--error-position (err)
+  "Return the position to insert ERR at."
+  (if (flycheck-relevant-error-other-file-p err)
+      ;; Display overlays for other-file errors on the first line
+      (point-min)
+    (flycheck-error-pos err)))
+
+(defun flycheck-inline--error-message (err)
+  "Return the message to display for ERR."
+  (let ((filename (flycheck-error-filename err))
+        (id (flycheck-error-id err)))
+    (concat (when (and filename (not (equal filename (buffer-file-name))))
+              (format "In \"%s\":\n" (file-relative-name filename default-directory)))
+            (flycheck-error-message err)
+            (when (and id flycheck-inline-display-error-id)
+              (format " [%s]" id)))))
+
+(defun flycheck-inline--error-face (err)
+  "Return the face used to display ERR."
+  (pcase (flycheck-error-level err)
+    (`info 'flycheck-inline-info)
+    (`warning 'flycheck-inline-warning)
+    (`error 'flycheck-inline-error)))
+
+(defun flycheck-inline-display-error (err)
+  "Display `flycheck-error' ERR inline."
+  (let* ((pos (flycheck-inline--error-position err))
+         (msg (propertize (flycheck-inline--error-message err)
+                          'face (flycheck-inline--error-face err))))
+    (funcall flycheck-inline-display-function msg pos)))
+
+(defun flycheck-inline-hide-errors ()
+  "Hide all inline messages currently being shown."
+  (funcall flycheck-inline-clear-function))
+
+(defun flycheck-inline-display-errors (errors)
+  "Display ERRORS, and all related errors, inline.
 
 ERRORS is a list of `flycheck-error' objects."
-  (flycheck-inline-hide-messages)
-  (mapc #'flycheck-inline--display-phantom
+  (flycheck-inline-hide-errors)
+  (mapc #'flycheck-inline-display-error
         (seq-uniq
          (seq-mapcat #'flycheck-related-errors errors))))
 
-(defun flycheck-inline-hide-messages ()
-  "Hide all inline messages currently being shown."
-    (mapc #'phantom-delete flycheck-inline--phantoms)
-    (setq flycheck-inline--phantoms nil))
+
+;;; Global minor mode
 
 (defvar flycheck-inline-old-display-function nil
   "The former value of `flycheck-display-errors-function'.")
@@ -147,25 +211,25 @@ interactively.
 In `flycheck-inline-mode', show Flycheck error messages inline,
 directly below the error reported location."
   :global t
-  :group 'flycheck
+  :group 'flycheck-inline
   (cond
    ;; Use our display function and remember the old one but only if we haven't
    ;; yet configured it, to avoid activating twice.
    ((and flycheck-inline-mode
          (not (eq flycheck-display-errors-function
-                  #'flycheck-inline-display-messages)))
+                  #'flycheck-inline-display-errors)))
     (setq flycheck-inline-old-display-function flycheck-display-errors-function
-          flycheck-display-errors-function #'flycheck-inline-display-messages)
-    (add-hook 'post-command-hook #'flycheck-inline-hide-messages))
+          flycheck-display-errors-function #'flycheck-inline-display-errors)
+    (add-hook 'post-command-hook #'flycheck-inline-hide-errors))
    ;; Reset the display function and remove ourselves from all hooks but only
    ;; if the mode is still active.
    ((and (not flycheck-inline-mode)
          (eq flycheck-display-errors-function
-             #'flycheck-inline-display-messages))
+             #'flycheck-inline-display-errors))
     (setq flycheck-display-errors-function flycheck-inline-old-display-function
           flycheck-inline-old-display-function nil)
-    (flycheck-inline-hide-messages)
-    (remove-hook 'post-command-hook 'flycheck-inline-hide-messages))))
+    (flycheck-inline-hide-errors)
+    (remove-hook 'post-command-hook 'flycheck-inline-hide-errors))))
 
 (provide 'flycheck-inline)
 
