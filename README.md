@@ -22,9 +22,11 @@ Add `flycheck-inline.el` somewhere to your `load-path` and add the following to
 your init file:
 
 ```emacs-lisp
-(with-eval-after-load 'flycheck-inline
+(with-eval-after-load 'flycheck
   (flycheck-inline-mode))
 ```
+
+This will turn on inline errors in all buffers after Flycheck has been loaded.
 
 ## Configuration
 
