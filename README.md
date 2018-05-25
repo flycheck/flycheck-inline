@@ -2,9 +2,8 @@
 
 [![License GPL 3](https://img.shields.io/github/license/flycheck/flycheck-inline.svg)][LICENCE]
 
-This is an extension for [Flycheck](http://www.flycheck.org/). It implements a
-minor-mode for displaying errors from Flycheck right below their reporting
-location, using overlays.
+This is an extension for [Flycheck][]. It implements a minor-mode for displaying
+errors from Flycheck right below their reporting location, using overlays.
 
 ![flycheck-inline warning preview](screenshots/warning.gif)
 
@@ -37,13 +36,31 @@ flycheck-inline RET`.
 If you wish to change the delay before errors are displayed, see
 `flycheck-display-errors-delay`.
 
+You can change the way overlays are created by customizing
+`flycheck-inline-display-function` and `flychjeck-inline-clear-function`.  Here
+is an example using [quick-peek][] to display the overlays which adds bars
+around them:
+
+```emacs-lisp
+(setq flycheck-inline-display-function
+      (lambda (msg pos)
+        (let* ((ov (quick-peek-overlay-ensure-at pos))
+               (contents (quick-peek-overlay-contents ov)))
+          (setf (quick-peek-overlay-contents ov)
+                (concat contents (when contents "\n") msg))
+          (quick-peek-update ov)))
+      flycheck-inline-clear-function #'quick-peek-hide)
+```
+
+The result:
+
+![flycheck-inline overlays with quick-peek](screenshots/quick-peek.png)
+
 ## Contributing
 
 We welcome all kinds of contributions, whether you write patches, open pull
-requests, write documentation, help others with Flycheck issues, or just tell
-other people about your experiences with Flycheck.  Please take a look at
-our [Contributor’s Guide][contrib] for help and guidance about contributing to
-Flycheck or to this extension.
+requests, write documentation, help others with issues, or just tell other
+people about your experiences with this extension.
 
 ## License
 
@@ -62,3 +79,5 @@ this program.  If not, see http://www.gnu.org/licenses/.
 [LICENCE]: https://github.com/flycheck/flycheck-licence/blob/master/LICENCE
 [contrib]: http://www.flycheck.org/en/latest/contributor/contributing.html
 [flycheck-rust]: https://github.com/flycheck/flycheck-rust
+[Flycheck]: http://www.flycheck.org/
+[quick-peek]: https://github.com/cpitclaudel/quick-peek
