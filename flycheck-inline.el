@@ -1,4 +1,4 @@
-;;; flycheck-inline-.el --- Display Flycheck errors inline -*- lexical-binding: t; -*-
+;;; flycheck-inline.el --- Display Flycheck errors inline -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2017-2018 fmdkdd
 
@@ -40,7 +40,7 @@
 
 ;;; Displaying line-long overlays (phantoms)
 
-(defun phantom-display (msg &optional pos)
+(defun flycheck-inline-phantom-display (msg &optional pos)
   "Display MSG in a phantom directly below POS.
 
 MSG is a string that will be put in a line-long overlay (phantom)
@@ -66,7 +66,7 @@ Return the displayed phantom."
     (overlay-put ov 'after-string str)
     ov))
 
-(defun phantom-delete (phantom)
+(defun flycheck-inline-phantom-delete (phantom)
   "Delete PHANTOM."
   (when (overlay-get phantom 'phantom)
     (delete-overlay phantom)))
@@ -141,11 +141,11 @@ IDs can also be seen in Flycheck's error list."
   "Display MSG at POS using phantoms.
 
 POS defaults to point."
-  (push (phantom-display msg pos) flycheck-inline--phantoms))
+  (push (flycheck-inline-phantom-display msg pos) flycheck-inline--phantoms))
 
 (defun flycheck-inline-clear-phantoms ()
   "Remove all phantoms from buffer."
-  (mapc #'phantom-delete flycheck-inline--phantoms)
+  (mapc #'flycheck-inline-phantom-delete flycheck-inline--phantoms)
   (setq flycheck-inline--phantoms nil))
 
 
@@ -219,6 +219,7 @@ In `flycheck-inline-mode', show Flycheck error messages inline,
 directly below the error reported location."
   :global t
   :group 'flycheck-inline
+  :require 'flycheck-inline
   (cond
    ;; Use our display function and remember the old one but only if we haven't
    ;; yet configured it, to avoid activating twice.
