@@ -1,6 +1,7 @@
 # flycheck-inline
 
 [![License GPL 3](https://img.shields.io/github/license/flycheck/flycheck-inline.svg)][LICENCE]
+[![MELPA](https://melpa.org/packages/flycheck-inline-badge.svg)](https://melpa.org/#/flycheck-inline)
 
 This is an extension for [Flycheck][]. It implements a minor-mode for displaying
 errors from Flycheck right below their reporting location, using overlays.
