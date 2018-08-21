@@ -59,8 +59,7 @@ Return the displayed phantom."
                ;; the line instead of below it.  Adding a newline before the
                ;; message fixes it.
                (str (concat (when (eq pos-eol (point-max)) "\n")
-                            (make-string offset ?\s)
-                            (string-trim msg)
+                            (flycheck-inline-indent-message offset msg)
                             "\n")))
     (overlay-put ov 'phantom t)
     (overlay-put ov 'after-string str)
@@ -70,6 +69,15 @@ Return the displayed phantom."
   "Delete PHANTOM."
   (when (overlay-get phantom 'phantom)
     (delete-overlay phantom)))
+
+(defun flycheck-inline-indent-message (offset msg)
+  "Indent all lines of MSG by OFFSET spaces.
+
+MSG is trimmed beforehand."
+  (let* ((pad (make-string offset ?\s))
+         (rep (concat "\n" pad)))
+    (concat pad
+            (replace-regexp-in-string "\n" rep (string-trim msg)))))
 
 
 ;;; Customization
