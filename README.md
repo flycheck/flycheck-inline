@@ -38,7 +38,7 @@ If you wish to change the delay before errors are displayed, see
 `flycheck-display-errors-delay`.
 
 You can change the way overlays are created by customizing
-`flycheck-inline-display-function` and `flychjeck-inline-clear-function`.  Here
+`flycheck-inline-display-function` and `flycheck-inline-clear-function`.  Here
 is an example using [quick-peek][] to display the overlays which adds bars
 around them:
 
