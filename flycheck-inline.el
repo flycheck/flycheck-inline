@@ -6,7 +6,7 @@
 ;; URL: https://github.com/flycheck/flycheck-inline
 ;; Keywords: tools, convenience
 ;; Version: 0.1-cvs
-;; Package-Requires: ((emacs "25.1") (flycheck "31"))
+;; Package-Requires: ((emacs "25.1") (flycheck "32"))
 
 ;; This file is not part of GNU Emacs.
 
