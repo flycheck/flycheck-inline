@@ -6,7 +6,7 @@
 ;; URL: https://github.com/flycheck/flycheck-inline
 ;; Keywords: tools, convenience
 ;; Version: 0.1-cvs
-;; Package-Requires: ((emacs "25.1") (flycheck "31"))
+;; Package-Requires: ((emacs "25.1") (flycheck "32"))
 
 ;; This file is not part of GNU Emacs.
 
@@ -30,8 +30,15 @@
 ;;
 ;; # Setup
 ;;
+;; Enable the global minor mode after Flycheck:
+;;
 ;; (with-eval-after-load 'flycheck
-;;   (flycheck-inline-mode))
+;;   (global-flycheck-inline-mode))
+;;
+;; Or enable the local minor mode for all flycheck-mode buffers:
+;;
+;; (with-eval-after-load 'flycheck
+;;   (add-hook 'flycheck-mode-hook #'turn-on-flycheck-inline))
 
 ;;; Code:
 
@@ -205,10 +212,7 @@ ERRORS is a list of `flycheck-error' objects."
          (seq-mapcat #'flycheck-related-errors errors))))
 
 
-;;; Global minor mode
-
-(defvar flycheck-inline-old-display-function nil
-  "The former value of `flycheck-display-errors-function'.")
+;;; Global and local minor modes
 
 ;;;###autoload
 (define-minor-mode flycheck-inline-mode
@@ -225,27 +229,31 @@ interactively.
 
 In `flycheck-inline-mode', show Flycheck error messages inline,
 directly below the error reported location."
-  :global t
   :group 'flycheck-inline
   :require 'flycheck-inline
   (cond
-   ;; Use our display function and remember the old one but only if we haven't
-   ;; yet configured it, to avoid activating twice.
-   ((and flycheck-inline-mode
-         (not (eq flycheck-display-errors-function
-                  #'flycheck-inline-display-errors)))
-    (setq flycheck-inline-old-display-function flycheck-display-errors-function
-          flycheck-display-errors-function #'flycheck-inline-display-errors)
+   ;; Use our display function.
+   (flycheck-inline-mode
+    (setq-local flycheck-display-errors-function #'flycheck-inline-display-errors)
     (add-hook 'post-command-hook #'flycheck-inline-hide-errors))
    ;; Reset the display function and remove ourselves from all hooks but only
    ;; if the mode is still active.
-   ((and (not flycheck-inline-mode)
-         (eq flycheck-display-errors-function
-             #'flycheck-inline-display-errors))
-    (setq flycheck-display-errors-function flycheck-inline-old-display-function
-          flycheck-inline-old-display-function nil)
+   ((not flycheck-inline-mode)
+    (kill-local-variable 'flycheck-display-errors-function)
     (flycheck-inline-hide-errors)
     (remove-hook 'post-command-hook 'flycheck-inline-hide-errors))))
+
+(defun turn-on-flycheck-inline ()
+  "Turn on `flycheck-inline-mode' in Flycheck buffers."
+  (when flycheck-mode
+    (flycheck-inline-mode)))
+
+;;;###autoload
+(define-global-minor-mode global-flycheck-inline-mode
+  flycheck-inline-mode turn-on-flycheck-inline
+  "Toggle flycheck-inline in all Flycheck buffers."
+  :group 'flycheck-inline
+  :require 'flycheck-inline)
 
 (provide 'flycheck-inline)
 

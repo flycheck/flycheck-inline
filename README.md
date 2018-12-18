@@ -23,10 +23,18 @@ your init file:
 
 ```emacs-lisp
 (with-eval-after-load 'flycheck
-  (flycheck-inline-mode))
+  (global-flycheck-inline-mode))
 ```
 
-This will turn on inline errors in all buffers after Flycheck has been loaded.
+This will turn on inline errors in all buffers where Flycheck is activated.
+
+If you don't want to use the global minor mode, you can turn on
+`flycheck-inline` in a hook:
+
+```emacs-lisp
+(with-eval-after-load 'flycheck
+  (add-hook 'flycheck-mode-hook #'turn-on-flycheck-inline))
+```
 
 ## Configuration
 
