@@ -30,15 +30,10 @@
 ;;
 ;; # Setup
 ;;
-;; Enable the global minor mode after Flycheck:
+;; Enable the local minor mode for all flycheck-mode buffers:
 ;;
 ;; (with-eval-after-load 'flycheck
-;;   (global-flycheck-inline-mode))
-;;
-;; Or enable the local minor mode for all flycheck-mode buffers:
-;;
-;; (with-eval-after-load 'flycheck
-;;   (add-hook 'flycheck-mode-hook #'turn-on-flycheck-inline))
+;;   (add-hook 'flycheck-mode-hook #'flycheck-inline-mode))
 
 ;;; Code:
 
