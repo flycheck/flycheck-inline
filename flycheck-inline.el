@@ -235,13 +235,13 @@ directly below the error reported location."
    ;; Use our display function.
    (flycheck-inline-mode
     (setq-local flycheck-display-errors-function #'flycheck-inline-display-errors)
-    (add-hook 'post-command-hook #'flycheck-inline-hide-errors))
+    (add-hook 'post-command-hook #'flycheck-inline-hide-errors nil 'local))
    ;; Reset the display function and remove ourselves from all hooks but only
    ;; if the mode is still active.
    ((not flycheck-inline-mode)
     (kill-local-variable 'flycheck-display-errors-function)
     (flycheck-inline-hide-errors)
-    (remove-hook 'post-command-hook 'flycheck-inline-hide-errors))))
+    (remove-hook 'post-command-hook #'flycheck-inline-hide-errors 'local))))
 
 (defun turn-on-flycheck-inline ()
   "Turn on `flycheck-inline-mode' in Flycheck buffers."
