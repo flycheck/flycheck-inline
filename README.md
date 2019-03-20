@@ -28,6 +28,14 @@ your init file:
 
 This will turn on inline errors in all buffers where Flycheck is activated.
 
+You can enable `flycheck-inline` in a subset of languages supported by Flycheck
+by conditionally enabling `flycheck-inline-mode` in the hook above, since the
+mode is buffer-local.
+
+Alternatively, if you do not use the setup above, you can use the command
+`global-flycheck-inline-mode` to enable `flycheck-inline-mode` in all current
+and future Flycheck buffers.
+
 ## Configuration
 
 The colors used to display the error/warning/info messages are inherited from

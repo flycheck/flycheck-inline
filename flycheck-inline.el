@@ -240,8 +240,12 @@ directly below the error reported location."
 
 (defun turn-on-flycheck-inline ()
   "Turn on `flycheck-inline-mode' in Flycheck buffers."
-  (when flycheck-mode
-    (flycheck-inline-mode)))
+  ;; Make sure to turn on flycheck-inline in this buffer, either directly if
+  ;; flycheck is already loaded, or via a hook if flycheck hasn't been loaded
+  ;; yet.
+  (if flycheck-mode
+      (flycheck-inline-mode)
+    (add-hook 'flycheck-mode-hook #'flycheck-inline-mode nil 'local)))
 
 ;;;###autoload
 (define-global-minor-mode global-flycheck-inline-mode
