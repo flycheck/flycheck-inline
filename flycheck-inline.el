@@ -38,11 +38,12 @@
 ;;; Code:
 
 (require 'flycheck)
+(require 'seq)
 
 
 ;;; Displaying line-long overlays (phantoms)
 
-(defun flycheck-inline-phantom-display (msg &optional pos)
+(defun flycheck-inline-phantom-display (msg &optional pos err)
   "Display MSG in a phantom directly below POS.
 
 MSG is a string that will be put in a line-long overlay (phantom)
@@ -65,12 +66,31 @@ Return the displayed phantom."
                             "\n")))
     (overlay-put ov 'phantom t)
     (overlay-put ov 'after-string str)
+    (overlay-put ov 'error err)
     ov))
 
+(defun flycheck-inline--on-point (phantom &optional pt)
+  "Whether the given error overlay contains the position PT otherwise `(point)'"
+  (let* ((pos (or pt (point)))
+         (err (overlay-get phantom 'error))
+         (region (flycheck-error-region-for-mode err 'symbols)))
+    (and phantom
+         ;; Must be one of our phantoms (probably unneeded).
+         (overlay-get phantom 'phantom)
+         ;; The underlying error must currently exist.
+         err
+         (memq err flycheck-current-errors)
+         ;; Most importantly, point must be within the error bounds.
+         region
+         (>= pos (car region))
+         (<= pos (cdr region)))))
+
 (defun flycheck-inline-phantom-delete (phantom)
-  "Delete PHANTOM."
-  (when (overlay-get phantom 'phantom)
-    (delete-overlay phantom)))
+  "Delete PHANTOM if its region doesn't contain point.
+
+Returns whether the overlay should be kept or not."
+  (or (flycheck-inline--on-point phantom)
+      (not (delete-overlay phantom))))
 
 (defun flycheck-inline-indent-message (offset msg)
   "Indent all lines of MSG by OFFSET spaces.
@@ -113,8 +133,8 @@ MSG is trimmed beforehand."
 
 This function is used to display inline all errors at point, as
 well as all related errors.  It has the signature (MSG &optional
-POS), where MSG is the error message to display, and POS its
-buffer position."
+POS ERR), where MSG is the error message to display, POS its
+buffer position, and ERR is the flycheck error in general."
   :group 'flycheck-inline
   :package-version '(flycheck-inline . "0.1")
   :type '(function :tag "Inline error display function")
@@ -144,19 +164,25 @@ IDs can also be seen in Flycheck's error list."
 
 ;;; Displaying inline errors with phantoms
 
+(defun flycheck-inline--displayed-p (err)
+  "Whether the given error is displayed with any inline overlays."
+  (seq-find (lambda (p) (eq err (overlay-get p 'error)))
+            flycheck-inline--phantoms))
+
 (defvar-local flycheck-inline--phantoms nil
   "Remember which phantoms were added to the buffer.")
 
-(defun flycheck-inline-display-phantom (msg &optional pos)
-  "Display MSG at POS using phantoms.
+(defun flycheck-inline-display-phantom (msg &optional pos err)
+  "Display MSG at POS representing error ERR using phantoms.
 
 POS defaults to point."
-  (push (flycheck-inline-phantom-display msg pos) flycheck-inline--phantoms))
+  (unless (flycheck-inline--displayed-p err)
+    (push (flycheck-inline-phantom-display msg pos err) flycheck-inline--phantoms)))
 
 (defun flycheck-inline-clear-phantoms ()
-  "Remove all phantoms from buffer."
-  (mapc #'flycheck-inline-phantom-delete flycheck-inline--phantoms)
-  (setq flycheck-inline--phantoms nil))
+  "Remove all phantoms from buffer that don't contain point."
+  (setq flycheck-inline--phantoms
+        (seq-filter #'flycheck-inline-phantom-delete flycheck-inline--phantoms)))
 
 
 
@@ -191,7 +217,7 @@ POS defaults to point."
   (let* ((pos (flycheck-inline--error-position err))
          (msg (propertize (flycheck-inline--error-message err)
                           'face (flycheck-inline--error-face err))))
-    (funcall flycheck-inline-display-function msg pos)))
+    (funcall flycheck-inline-display-function msg pos err)))
 
 (defun flycheck-inline-hide-errors ()
   "Hide all inline messages currently being shown."
