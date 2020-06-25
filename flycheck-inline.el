@@ -69,7 +69,7 @@ Return the displayed phantom."
     (overlay-put ov 'error err)
     ov))
 
-(defun flycheck-inline--on-point (phantom &optional pt)
+(defun flycheck-inline--contains-point (phantom &optional pt)
   "Whether the given error overlay contains the position PT otherwise `(point)'"
   (let* ((pos (or pt (point)))
          (err (overlay-get phantom 'error))
@@ -88,9 +88,9 @@ Return the displayed phantom."
 (defun flycheck-inline-phantom-delete (phantom)
   "Delete PHANTOM if its region doesn't contain point.
 
-Returns whether the overlay should be kept or not."
-  (or (flycheck-inline--on-point phantom)
-      (not (delete-overlay phantom))))
+Returns the overlay removed or nil."
+  (and (not (flycheck-inline--contains-point phantom))
+       (delete-overlay phantom)))
 
 (defun flycheck-inline-indent-message (offset msg)
   "Indent all lines of MSG by OFFSET spaces.
@@ -182,7 +182,7 @@ POS defaults to point."
 (defun flycheck-inline-clear-phantoms ()
   "Remove all phantoms from buffer that don't contain point."
   (setq flycheck-inline--phantoms
-        (seq-filter #'flycheck-inline-phantom-delete flycheck-inline--phantoms)))
+        (seq-remove #'flycheck-inline-phantom-delete flycheck-inline--phantoms)))
 
 
 
