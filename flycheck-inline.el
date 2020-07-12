@@ -89,8 +89,9 @@ Return the displayed phantom."
   "Delete PHANTOM if its region doesn't contain point.
 
 Returns the overlay removed or nil."
-  (and (not (flycheck-inline--contains-point phantom))
-       (delete-overlay phantom)))
+  (if (flycheck-inline--contains-point phantom)
+      nil
+    (progn (delete-overlay phantom) t)))
 
 (defun flycheck-inline-indent-message (offset msg)
   "Indent all lines of MSG by OFFSET spaces.
