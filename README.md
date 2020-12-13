@@ -52,7 +52,7 @@ around them:
 
 ```emacs-lisp
 (setq flycheck-inline-display-function
-      (lambda (msg pos)
+      (lambda (msg pos err)
         (let* ((ov (quick-peek-overlay-ensure-at pos))
                (contents (quick-peek-overlay-contents ov)))
           (setf (quick-peek-overlay-contents ov)
