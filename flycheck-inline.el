@@ -39,6 +39,7 @@
 
 (require 'flycheck)
 (require 'seq)
+(require 'compile)
 
 
 ;;; Displaying line-long overlays (phantoms)
