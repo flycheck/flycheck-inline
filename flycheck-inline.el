@@ -55,7 +55,7 @@ Return the displayed phantom."
                (`(,offset . ,pos-eol)
                 (save-excursion
                   (goto-char p)
-                  (cons (- p (point-at-bol)) (point-at-eol))))
+                  (cons (- p (line-beginning-position)) (line-end-position))))
                (ov (make-overlay pos-eol (1+ pos-eol)))
                ;; If the error is on the last line, and that line doesn't end
                ;; with a newline, the overlay will be displayed at the end of
@@ -165,13 +165,13 @@ IDs can also be seen in Flycheck's error list."
 
 ;;; Displaying inline errors with phantoms
 
+(defvar-local flycheck-inline--phantoms nil
+  "Remember which phantoms were added to the buffer.")
+
 (defun flycheck-inline--displayed-p (err)
   "Whether the given error is displayed with any inline overlays."
   (seq-find (lambda (p) (eq err (overlay-get p 'error)))
             flycheck-inline--phantoms))
-
-(defvar-local flycheck-inline--phantoms nil
-  "Remember which phantoms were added to the buffer.")
 
 (defun flycheck-inline-display-phantom (msg &optional pos err)
   "Display MSG at POS representing error ERR using phantoms.
