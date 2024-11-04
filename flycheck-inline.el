@@ -269,11 +269,13 @@ directly below the error reported location."
   (cond
    ;; Use our display function.
    (flycheck-inline-mode
+    (setq-local flycheck-help-echo-function nil)
     (setq-local flycheck-display-errors-function #'flycheck-inline-display-errors)
     (setq-local flycheck-clear-displayed-errors-function #'flycheck-inline-hide-errors))
    ;; Reset the display function and remove ourselves from all hooks but only
    ;; if the mode is still active.
    ((not flycheck-inline-mode)
+    (kill-local-variable 'flycheck-help-echo-function)
     (kill-local-variable 'flycheck-display-errors-function)
     (kill-local-variable 'flycheck-clear-displayed-errors-function)
     (flycheck-inline-hide-errors))))
