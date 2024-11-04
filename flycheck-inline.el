@@ -229,9 +229,22 @@ POS defaults to point."
 
 ERRORS is a list of `flycheck-error' objects."
   (flycheck-inline-hide-errors)
-  (mapc #'flycheck-inline-display-error
-        (seq-uniq
-         (seq-mapcat #'flycheck-related-errors errors))))
+  (let* ((lines (mapcar 'flycheck-error-line errors))
+         (line-range (cons (apply 'min lines) (apply 'max lines)))
+         (columns (mapcar 'flycheck-error-column errors))
+         (column-range (cons (apply 'min columns) (apply 'max columns))))
+    (mapc #'flycheck-inline-display-error
+          (seq-filter
+           (lambda (error)
+             (let ((line (flycheck-error-line error))
+                   (column (flycheck-error-column error)))
+               (and
+                (>= line (car line-range))
+                (<= line (cdr line-range))
+                (>= column (car column-range))
+                (<= column (cdr column-range)))))
+           (seq-uniq
+            (seq-mapcat #'flycheck-related-errors errors))))))
 
 
 ;;; Global and local minor modes
