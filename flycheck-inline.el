@@ -231,8 +231,9 @@ ERRORS is a list of `flycheck-error' objects."
   (flycheck-inline-hide-errors)
   (let* ((lines (mapcar 'flycheck-error-line errors))
          (line-range (cons (apply 'min lines) (apply 'max lines)))
-         (columns (mapcar 'flycheck-error-column errors))
-         (column-range (cons (apply 'min columns) (apply 'max columns))))
+         (columns (seq-filter 'null (mapcar 'flycheck-error-column errors)))
+         (column-range (and columns
+                            (cons (apply 'min columns) (apply 'max columns)))))
     (mapc #'flycheck-inline-display-error
           (seq-filter
            (lambda (error)
@@ -241,10 +242,12 @@ ERRORS is a list of `flycheck-error' objects."
                (and
                 (>= line (car line-range))
                 (<= line (cdr line-range))
-                (>= column (car column-range))
-                (<= column (cdr column-range)))))
-           (seq-uniq
-            (seq-mapcat #'flycheck-related-errors errors))))))
+                (or (and column-range column
+                         (>= column (car column-range))
+                         (<= column (cdr column-range))
+                         t))))
+             (seq-uniq
+              (seq-mapcat #'flycheck-related-errors errors)))))))
 
 
 ;;; Global and local minor modes
