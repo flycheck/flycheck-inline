@@ -245,9 +245,9 @@ ERRORS is a list of `flycheck-error' objects."
                 (or (and column-range column
                          (>= column (car column-range))
                          (<= column (cdr column-range))
-                         t))))
-             (seq-uniq
-              (seq-mapcat #'flycheck-related-errors errors)))))))
+                         t)))))
+           (seq-uniq
+            (seq-mapcat #'flycheck-related-errors errors))))))
 
 
 ;;; Global and local minor modes
