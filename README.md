@@ -1,3 +1,22 @@
+> **This package is deprecated.**
+>
+> Flycheck 38 ships inline error display out of the box: `flycheck-annotate-mode`
+> shows errors next to the code they refer to, with several styles to pick from
+> (below the line like this package did, at the end of the line, or flushed to
+> the window edge). It works in terminals too, and it's maintained as part of
+> Flycheck itself.
+>
+> To migrate, remove flycheck-inline from your config and enable the built-in
+> mode instead:
+>
+> ```elisp
+> (global-flycheck-annotate-mode)
+> ```
+>
+> The default setup shows full messages below the current line and compact ones
+> elsewhere; see `M-x customize-group RET flycheck-annotate` for the knobs.
+> This repository will be archived and receives no further updates.
+
 # flycheck-inline
 
 [![License GPL 3](https://img.shields.io/github/license/flycheck/flycheck-inline.svg)][LICENCE]
